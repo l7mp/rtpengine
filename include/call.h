@@ -381,6 +381,7 @@ struct call_media {
 	//struct codec_handler	*dtmf_injector;
 	struct t38_gateway	*t38_gateway;
 	struct codec_handler	*t38_handler;
+	unsigned int		buffer_delay;
 #ifdef WITH_TRANSCODING
 	union {
 		struct {
