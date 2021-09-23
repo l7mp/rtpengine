@@ -1819,7 +1819,7 @@ static int packet_dtmf(struct codec_ssrc_handler *ch, struct codec_ssrc_handler 
 		struct transcode_packet *packet, struct media_packet *mp)
 {
 	if (ch->ts_in != packet->ts) { // ignore already processed events
-		int ret = dtmf_event(mp, packet->payload, ch->encoder_format.clockrate);
+		int ret = dtmf_event_packet(mp, packet->payload, ch->encoder_format.clockrate);
 		if (G_UNLIKELY(ret == -1)) // error
 			return -1;
 		if (ret == 1) {
