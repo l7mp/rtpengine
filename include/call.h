@@ -202,6 +202,10 @@ enum {
 enum block_dtmf_mode {
 	BLOCK_DTMF_OFF = 0,
 	BLOCK_DTMF_DROP = 1,
+
+	BLOCK_DTMF___PCM_REPLACE_START = 2,
+	BLOCK_DTMF_SILENCE = 2,
+	BLOCK_DTMF___PCM_REPLACE_END = 2,
 };
 
 
@@ -387,6 +391,10 @@ struct call_media {
 	struct t38_gateway	*t38_gateway;
 	struct codec_handler	*t38_handler;
 	unsigned int		buffer_delay;
+
+	uint32_t		dtmf_start;
+	char			dtmf_code;
+	uint32_t		dtmf_end;
 #ifdef WITH_TRANSCODING
 	union {
 		struct {

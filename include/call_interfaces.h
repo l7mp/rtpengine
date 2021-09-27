@@ -74,6 +74,8 @@ struct sdp_ng_flags {
 		MEO_BKW,
 		MEO_BOTH,
 	} media_echo:3;
+	enum block_dtmf_mode block_dtmf_mode;
+	int delay_buffer;
 	unsigned int asymmetric:1,
 	             protocol_accept:1,
 	             no_redis_update:1,
@@ -117,6 +119,7 @@ struct sdp_ng_flags {
 		     allow_transcoding:1,
 		     accept_any:1,
 	             inject_dtmf:1,
+		     detect_dtmf:1,
 	             t38_decode:1,
 	             t38_force:1,
 	             t38_stop:1,
