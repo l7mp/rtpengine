@@ -1816,7 +1816,7 @@ static struct codec_handler *__input_handler(struct codec_handler *h, struct med
 	return h;
 }
 
-static int packet_dtmf(struct codec_ssrc_handler *ch, struct codec_ssrc_handler *input_ch,
+static int packet_dtmf_event(struct codec_ssrc_handler *ch, struct codec_ssrc_handler *input_ch,
 		struct transcode_packet *packet, struct media_packet *mp)
 {
 	if (ch->ts_in != packet->ts) { // ignore already processed events
@@ -1831,6 +1831,14 @@ static int packet_dtmf(struct codec_ssrc_handler *ch, struct codec_ssrc_handler 
 		else
 			input_ch->dtmf_start_ts = packet->ts ? packet->ts : 1;
 	}
+	return 0;
+}
+
+static int packet_dtmf(struct codec_ssrc_handler *ch, struct codec_ssrc_handler *input_ch,
+		struct transcode_packet *packet, struct media_packet *mp)
+{
+	if (packet_dtmf_event(ch, input_ch, packet, mp))
+		return -1;
 
 	int ret = 0;
 
@@ -3215,17 +3223,23 @@ static int packet_decode(struct codec_ssrc_handler *ch, struct codec_ssrc_handle
 		ch->first_ts = packet->ts;
 	ch->last_ts = packet->ts;
 
-	if (input_ch->dtmf_start_ts && !rtpe_config.dtmf_no_suppress) {
-		if ((packet->ts > input_ch->dtmf_start_ts && packet->ts - input_ch->dtmf_start_ts > 80000) ||
-				(packet->ts < input_ch->dtmf_start_ts && input_ch->dtmf_start_ts - packet->ts > 80000)) {
-			ilogs(transcoding, LOG_DEBUG, "Resetting decoder DTMF state due to TS discrepancy");
-			input_ch->dtmf_start_ts = 0;
-		}
-		else {
-			ilogs(transcoding, LOG_DEBUG, "Decoder is in DTMF state, discaring codec packet");
-			if (mp->ssrc_out)
-				mp->ssrc_out->parent->seq_diff--;
+	if (ch->decoder->def->dtmf) {
+		if (packet_dtmf_event(ch, input_ch, packet, mp))
 			goto out;
+	}
+	else {
+		if (input_ch->dtmf_start_ts && !rtpe_config.dtmf_no_suppress) {
+			if ((packet->ts > input_ch->dtmf_start_ts && packet->ts - input_ch->dtmf_start_ts > 80000) ||
+					(packet->ts < input_ch->dtmf_start_ts && input_ch->dtmf_start_ts - packet->ts > 80000)) {
+				ilogs(transcoding, LOG_DEBUG, "Resetting decoder DTMF state due to TS discrepancy");
+				input_ch->dtmf_start_ts = 0;
+			}
+			else {
+				ilogs(transcoding, LOG_DEBUG, "Decoder is in DTMF state, discaring codec packet");
+				if (mp->ssrc_out)
+					mp->ssrc_out->parent->seq_diff--;
+				goto out;
+			}
 		}
 	}
 
