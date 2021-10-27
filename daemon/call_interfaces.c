@@ -30,6 +30,7 @@
 #include "media_player.h"
 #include "dtmf.h"
 #include "codec.h"
+#include "dtmf.h"
 
 
 struct fragment_key {
@@ -1158,6 +1159,12 @@ static void call_ng_process_flags(struct sdp_ng_flags *out, bencode_item_t *inpu
 			case CSH_LOOKUP("zero"):
 				out->block_dtmf_mode = BLOCK_DTMF_ZERO;
 				break;
+			case CSH_LOOKUP("DTMF"):
+				out->block_dtmf_mode = BLOCK_DTMF_DTMF;
+				break;
+			case CSH_LOOKUP("dtmf"):
+				out->block_dtmf_mode = BLOCK_DTMF_DTMF;
+				break;
 			default:
 				ilog(LOG_WARN, "Unknown 'DTMF-security' flag encountered: '" STR_FORMAT "'",
 						STR_FMT(&s));
@@ -1229,6 +1236,16 @@ static void call_ng_process_flags(struct sdp_ng_flags *out, bencode_item_t *inpu
 			out->generate_rtcp = 1;
 		else if (!str_cmp(&s, "off"))
 			out->generate_rtcp_off = 1;
+	}
+
+	out->frequency = bencode_dictionary_get_int_str(input, "frequency", 0);
+	out->volume = bencode_dictionary_get_int_str(input, "volume", 9999);
+	out->digit = bencode_dictionary_get_int_str(input, "digit", -1);
+	if (out->digit == -1) {
+		str tmp;
+		bencode_dictionary_get_str(input, "digit", &tmp);
+		if (tmp.len == 1)
+			out->digit = tmp.s[0];
 	}
 
 	if (bencode_get_alt(input, "media-echo", "media echo", &s)) {
@@ -2256,6 +2273,25 @@ static void call_monologue_set_block_mode(struct call_monologue *ml, struct sdp_
 		}
 	}
 	ml->detect_dtmf = flags->detect_dtmf;
+
+	if (flags->volume >= 0 && flags->volume <= 63)
+		ml->tone_vol = flags->volume;
+	else if (flags->volume < 0 && flags->volume >= -63)
+		ml->tone_vol = -1 * flags->volume;
+
+	if (flags->frequency > 0)
+		ml->tone_freq = flags->frequency;
+
+	if (flags->block_dtmf_mode == BLOCK_DTMF_ZERO)
+		ml->dtmf_digit = '0';
+	else {
+		char digit = dtmf_code_to_char(flags->digit);
+		if (digit)
+			ml->dtmf_digit = digit;
+		else if (dtmf_code_from_char(flags->digit) != -1)
+			ml->dtmf_digit = flags->digit;
+	}
+
 	codec_update_all_handlers(ml);
 }
 const char *call_block_dtmf_ng(bencode_item_t *input, bencode_item_t *output) {

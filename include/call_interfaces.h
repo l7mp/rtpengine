@@ -77,6 +77,9 @@ struct sdp_ng_flags {
 	} media_echo:3;
 	enum block_dtmf_mode block_dtmf_mode;
 	int delay_buffer;
+	int frequency;
+	int volume;
+	char digit;
 	unsigned int asymmetric:1,
 	             protocol_accept:1,
 	             no_redis_update:1,
