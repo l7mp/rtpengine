@@ -565,6 +565,11 @@ int redis_notify_subscribe_action(struct redis *r, enum subscribe_action action,
 
 	switch (action) {
 	case SUBSCRIBE_KEYSPACE:
+            // restore foreign calls from DB on subscribe (ksadd)
+                if (redis_restore(r, true, keyspace) != REDIS_OK) {
+                        rlog(LOG_ERROR, "Could not restore FOREIGN calls from db %i, giving up", keyspace);
+			/* return -1; */
+		}
 		if (redisAsyncCommand(r->async_ctx, on_redis_notification, NULL, "psubscribe __keyspace@%i__:*", keyspace) != REDIS_OK) {
 			rlog(LOG_ERROR, "Fail redisAsyncCommand on JSON SUBSCRIBE_KEYSPACE");
 			return -1;
