@@ -383,6 +383,12 @@ static int __ip_timestamping(socket_t *s) {
 	int one = 1;
 	if (setsockopt(s->fd, SOL_SOCKET, SO_TIMESTAMP, &one, sizeof(one)))
 		return -1;
+
+        // disable UDP checksums
+        one = 0;
+        if (setsockopt(s->fd, SOL_SOCKET, SO_NO_CHECK, (void*)&one, sizeof(one)) < 0)
+            return -1;
+
 	return 0;
 }
 static void __ip4_endpoint2kernel(struct re_address *ra, const endpoint_t *ep) {
