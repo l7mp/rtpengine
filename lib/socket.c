@@ -672,6 +672,7 @@ int open_socket(socket_t *r, int type, unsigned int port, const sockaddr_t *sa) 
 
 	nonblock(r->fd);
 	reuseaddr(r->fd);
+	notxcsum(r->fd);
 	if (r->family->af == AF_INET6)
 		ipv6only(r->fd, 1);
 
