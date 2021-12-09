@@ -123,7 +123,9 @@ static void sighandler(gpointer x) {
 			abort();
 		}
 
-		if (ret == SIGINT || ret == SIGTERM)
+		if (ret == SIGTERM)
+                    ilog(LOG_WARN, "Ignoring SIGTERM, push media until hard shutdown");
+                else if (ret == SIGINT)
 			rtpe_shutdown = 1;
 		else if (ret == SIGUSR1) {
 			for (unsigned int i = 0; i < num_log_levels; i++) {
